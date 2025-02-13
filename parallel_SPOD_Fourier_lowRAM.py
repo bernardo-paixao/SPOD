@@ -15,6 +15,7 @@ from scipy.interpolate import griddata
 import time
 import pickle
 from multiprocessing import Pool
+from functools import partial
 
 def get_coordinates(set):
     buffer = set[0]
@@ -240,7 +241,7 @@ def compute_SPOD(iNfft, case_name, X, Y, Ntheta):
     return Lam_mat, Phi_mat
 
 
-def main(create_qhat = True):
+def main(create_qhat = False):
 
     Nprocesses = 32 # Number of processes used in the multiprocessing Pool 
 
@@ -252,13 +253,7 @@ def main(create_qhat = True):
     Nsave = 3 # Number of SPOD modes saved per frequency
 
     Qhat_folder =  '/mnt/rozo/2atgobain/SPOD data/Qhat'
-    case_list = ['Ar01_S0_4500Pa_12p5kHz_d41mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d51mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d61mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d81mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d101mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d121mm',
-                 'Ar01_S0_4500Pa_12p5kHz_d201mm']
+    case_list = ['Ar01_S0_4500Pa_12p5kHz_d41mm']
     
     for k, case_name in enumerate(case_list):
         print("Starting SPOD for case: " + case_name)
@@ -291,7 +286,7 @@ def main(create_qhat = True):
 
         # Compute SPOD for each m number sequentially and for each frenquecy in parallel
         t1 = time.time()
-        SPOD_wrapper = lambda iNfft : compute_SPOD(iNfft, case_name, X, Y, Ntheta)
+        SPOD_wrapper = partial(compute_SPOD, case_name=case_name, X=X, Y=Y, Ntheta=Ntheta)
         with Pool(processes=Nprocesses) as pool:
             pool_results = pool.map(SPOD_wrapper, range(Nfft//2))
         
